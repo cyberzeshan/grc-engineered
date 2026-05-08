@@ -1,0 +1,15 @@
+Do you maintain a formal information security policy approved by senior management?
+How do you manage user access provisioning and de-provisioning?
+Do you require multi-factor authentication for remote access?
+How frequently do you conduct user access reviews?
+Describe your vulnerability management program including scan frequency and remediation SLAs.
+How do you protect data in transit and at rest?
+Describe your incident response process and notification timelines.
+Do you have a business continuity plan (BCP) and disaster recovery plan (DRP)?
+How do you vet and manage third-party vendors with access to your systems?
+Do you conduct annual penetration testing? If so, who performs it?
+How do you handle data retention and secure disposal?
+Describe your change management process for production systems.
+Do you hold SOC 2, ISO 27001, or other certifications? Please attach current reports.
+How do you train employees on information security?
+Describe your encryption standards for sensitive data.

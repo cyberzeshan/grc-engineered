@@ -1,0 +1,44 @@
+{
+  "control_id": "A.8.2",
+  "source_framework": "ISO_27001_2022",
+  "source_title": "Privileged access rights",
+  "source_description": "The allocation and use of privileged access rights shall be restricted and managed.",
+  "mappings": {
+    "SOC2_TSC": {
+      "control_ref": "CC6.1",
+      "control_title": "Logical and Physical Access Controls",
+      "confidence": "high",
+      "rationale": "Both controls address restriction of privileged access; SOC 2 CC6.1 covers logical access controls including privileged user management."
+    },
+    "NIST_CSF_2": {
+      "control_ref": "PR.AA-01",
+      "control_title": "Identities and credentials for authorized users, services, and hardware are managed by the organization",
+      "confidence": "high",
+      "rationale": "NIST CSF 2.0 PR.AA-01 directly addresses identity and credential management including privileged accounts."
+    },
+    "ISO_42001_2023": {
+      "control_ref": "A.6.2.3",
+      "control_title": "AI system access control",
+      "confidence": "medium",
+      "rationale": "ISO 42001 A.6.2.3 extends access control requirements to AI systems; privileged access to AI model training pipelines falls under this control."
+    }
+  },
+  "drift_alerts": [],
+  "oscal_fragment": {
+    "control": {
+      "id": "a.8.2",
+      "class": "ISO-27001-2022",
+      "title": "Privileged access rights",
+      "props": [
+        { "name": "label", "value": "A.8.2" },
+        { "name": "sort-id", "value": "a.08.02" }
+      ],
+      "links": [
+        { "href": "#cc6.1", "rel": "related", "text": "SOC 2 CC6.1" },
+        { "href": "#pr.aa-01", "rel": "related", "text": "NIST CSF 2.0 PR.AA-01" }
+      ]
+    }
+  },
+  "generated_at": "2026-05-08T10:30:00Z",
+  "agent_version": "0.1.0"
+}

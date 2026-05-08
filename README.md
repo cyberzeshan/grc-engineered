@@ -1,0 +1,243 @@
+# ⚙️ grc-engineered
+
+> **GRC automation built the way software should be — structured, versioned, and agent-driven.**  
+> Seven AI agents. One shared knowledge base. Zero manual copy-paste.
+
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white)](https://python.org)
+[![Claude API](https://img.shields.io/badge/Claude-API-D97706?style=flat)](https://anthropic.com)
+[![ChromaDB](https://img.shields.io/badge/Vector_Store-ChromaDB-FF6B35?style=flat)](https://trychroma.com)
+[![Streamlit](https://img.shields.io/badge/UI-Streamlit-FF4B4B?style=flat&logo=streamlit&logoColor=white)](https://streamlit.io)
+[![License: MIT](https://img.shields.io/badge/License-MIT-22C55E?style=flat)](LICENSE)
+
+---
+
+## What is this?
+
+**grc-engineered** is a multi-agent GRC automation platform that treats compliance as a software problem — not a spreadsheet problem.
+
+Seven specialized agents, each with a defined schema and system prompt, handle the most time-consuming work in a GRC program: mapping controls across frameworks, reviewing evidence artifacts, triaging vendors, drafting policies, answering customer questionnaires, classifying AI systems under the EU AI Act, and writing audit narratives. All powered by the Claude API, all running locally.
+
+This project is the practical implementation behind the **GRC Engineered** content series — documenting what happens when you apply engineering discipline to governance, risk, and compliance.
+
+---
+
+## Architecture
+
+```
+┌──────────────────────────────────────────────────────────┐
+│                    Claude Orchestrator                    │
+│               routes tasks · manages state               │
+└──────┬──────────┬──────────┬──────────┬─────────────────┘
+       │          │          │          │
+  ┌────▼───┐ ┌────▼───┐ ┌───▼────┐ ┌───▼────┐
+  │Control │ │Evidence│ │Quest.  │ │Policy  │
+  │Mapping │ │Reviewer│ │Respond.│ │Drafter │
+  └────────┘ └────────┘ └────────┘ └────────┘
+  ┌────────┐ ┌────────┐ ┌────────┐
+  │ TPRM  │ │   AI   │ │ Audit  │
+  │Triage  │ │Registry│ │Narrat. │
+  └────────┘ └────────┘ └────────┘
+       │          │          │
+┌──────▼──────────▼──────────▼────────────────────────────┐
+│                 Shared Knowledge Layer                    │
+│   Vector Store · Framework Library · Evidence Store      │
+│       ChromaDB · ISO 27001 · SOC 2 · NIST CSF 2.0      │
+└──────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Agents
+
+| Agent | Role Scope | What It Does | Key Output |
+|-------|-----------|--------------|------------|
+| **Control Mapping** | GRC Engineer | Maps controls across ISO 27001, SOC 2, NIST CSF 2.0, ISO 42001; alerts on framework drift | OSCAL JSON fragment |
+| **Evidence Reviewer** | GRC Engineer | Scores Drata evidence artifacts for completeness, freshness, and relevance; tags stale evidence | Scored evidence report |
+| **Questionnaire Responder** | Head of GRC | Answers Tier-2/3 security questionnaires via RAG over your CCF and policy corpus | Draft answers + source refs |
+| **Policy Drafter** | Head of GRC | Drafts policy revisions when a framework or regulation changes; maintains a change log | Revised Markdown + changelog |
+| **TPRM Triage** | GRC Engineer | Auto-tiers new vendors; flags AI-class vendors for specialized questionnaire routing | Vendor risk profile |
+| **AI Use-Case Registry** | Head of GRC | Drafts AI registry entries from intake forms; applies EU AI Act risk classification | Registry entry Markdown |
+| **Audit Narrative** | Head of GRC | Drafts control narratives, auditor responses, and exception memos from real evidence | Audit-ready prose |
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| AI Reasoning | [Anthropic Claude API](https://anthropic.com) (`claude-sonnet-4-5`) |
+| Vector Store | [ChromaDB](https://trychroma.com) — local, no server needed |
+| Document Ingestion | [pypdf](https://pypdf.readthedocs.io) + custom chunking pipeline |
+| Data Models | [Pydantic v2](https://docs.pydantic.dev) |
+| UI | [Streamlit](https://streamlit.io) |
+| Document Output | [python-docx](https://python-docx.readthedocs.io) + [openpyxl](https://openpyxl.readthedocs.io) |
+| State / Memory | SQLite (stdlib) |
+
+---
+
+## Project Structure
+
+```
+grc-engineered/
+├── core/
+│   ├── orchestrator.py          # Routes tasks to agents; manages conversation state
+│   ├── memory.py                # SQLite-backed agent state
+│   ├── vector_store.py          # ChromaDB wrapper: ingest + semantic query
+│   ├── document_loader.py       # PDF/DOCX chunking pipeline
+│   └── models.py                # Pydantic schemas for all agent I/O
+│
+├── agents/
+│   ├── base_agent.py            # BaseAgent: Claude call, tool use, retry logic
+│   ├── control_mapping_agent.py
+│   ├── evidence_reviewer_agent.py
+│   ├── questionnaire_responder_agent.py
+│   ├── policy_drafter_agent.py
+│   ├── tprm_triage_agent.py
+│   ├── ai_registry_agent.py
+│   └── audit_narrative_agent.py
+│
+├── knowledge/
+│   ├── frameworks/              # ISO 27001, SOC 2, NIST CSF 2.0, ISO 42001 source docs
+│   ├── policies/                # Policy templates
+│   ├── evidence_samples/        # Mock Drata evidence exports
+│   └── questionnaires/          # SIG Lite, CAIQ sample questionnaires
+│
+├── tools/
+│   ├── drift_checker.py         # Compares framework versions against CCF
+│   ├── evidence_scorer.py       # Freshness + completeness scoring
+│   └── vendor_classifier.py     # Tier 1/2/3 and AI-class classification
+│
+├── outputs/
+│   └── examples/                # Sample outputs — no API key needed to view
+│       ├── control_mapping_example.json
+│       ├── vendor_profile_example.md
+│       └── audit_narrative_example.md
+│
+├── ui/
+│   └── app.py                   # Streamlit demo dashboard
+│
+├── tests/
+│   ├── test_control_mapping.py
+│   ├── test_evidence_reviewer.py
+│   └── test_tprm_triage.py
+│
+├── .env.example
+├── requirements.txt
+├── pyproject.toml
+└── README.md
+```
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- Python 3.11+
+- An [Anthropic API key](https://console.anthropic.com)
+
+### Installation
+
+```bash
+# Clone the repo
+git clone https://github.com/YOUR_USERNAME/grc-engineered.git
+cd grc-engineered
+
+# Create a virtual environment
+python -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env and add your ANTHROPIC_API_KEY
+```
+
+### Run the Streamlit UI
+
+```bash
+streamlit run ui/app.py
+```
+
+Open `http://localhost:8501` in your browser. Select any agent from the sidebar, fill in the form, and click **Run Agent**.
+
+### Run an Agent from the CLI
+
+```bash
+# Control Mapping Agent
+python -m agents.control_mapping_agent \
+  --control-id "A.8.2" \
+  --source "ISO_27001_2022" \
+  --targets "SOC2_TSC,NIST_CSF_2"
+
+# TPRM Triage Agent
+python -m agents.tprm_triage_agent \
+  --vendor "Acme AI Tools" \
+  --data-types "PII,financial" \
+  --uses-ai true
+```
+
+---
+
+## Example Outputs
+
+Browse pre-generated outputs in [`outputs/examples/`](outputs/examples/) — no API key or setup needed.
+
+**Control mapping — ISO 27001 A.8.2 → SOC 2 + NIST CSF 2.0:**
+```json
+{
+  "control_id": "A.8.2",
+  "mappings": {
+    "SOC2_TSC": { "control_ref": "CC6.1", "confidence": "high" },
+    "NIST_CSF_2": { "control_ref": "PR.AA-01", "confidence": "high" }
+  },
+  "drift_alerts": [],
+  "oscal_fragment": { "...": "see full file" }
+}
+```
+
+**Vendor triage — AI SaaS tool flagged HIGH:**
+```
+Vendor:     Acme AI Assistant
+Risk Tier:  HIGH
+AI Flag:    ✓ — route to AI Questionnaire
+Next Steps: Send AI questionnaire · Request SOC 2 · Legal DPA review
+```
+
+---
+
+## Frameworks Supported
+
+- ISO 27001:2022
+- SOC 2 Trust Services Criteria (2017)
+- NIST Cybersecurity Framework 2.0
+- ISO 42001:2023 (AI Management Systems)
+- EU AI Act (risk classification — Articles 5, 6, 50)
+- NIST AI RMF 1.0
+
+---
+
+## Roadmap
+
+- [ ] Drata API integration for live evidence ingestion
+- [ ] Slack bot interface for Questionnaire Responder
+- [ ] Full OSCAL export for the CCF
+- [ ] GitHub Actions compliance gate (CI/CD pipeline check)
+- [ ] ISO 42001 Annex A control coverage tracker
+- [ ] Web-based trust portal for questionnaire responses
+
+---
+
+## About
+
+Built by [Zeshan Ahmad](https://linkedin.com/in/YOUR_LINKEDIN) — GRC Specialist at Cisco (Splunk), ISO 27001 & ISO 42001 Lead Auditor, CISA, CISM.
+
+**grc-engineered** is the GitHub home of the GRC Engineered personal brand — practical automation and engineering-grade thinking applied to governance, risk, and compliance.
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE)
