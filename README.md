@@ -353,9 +353,7 @@ Next Steps: Send AI questionnaire · Request SOC 2 · Legal DPA review
 
 ## About
 
-Built by [Zeshan Ahmad](https://linkedin.com/in/YOUR_LINKEDIN) — GRC Specialist at Cisco (Splunk), ISO 27001 & ISO 42001 Lead Auditor, CISA, CISM.
-
-**grc-engineered** is the GitHub home of the GRC Engineered personal brand — practical automation and engineering-grade thinking applied to governance, risk, and compliance.
+Built by [Zeshan Ahmad](https://linkedin.com/in/YOUR_LINKEDIN) — GRC Specialist, ISO 27001 & ISO 42001 Lead Auditor, CISA, CISM.
 
 ---
 
