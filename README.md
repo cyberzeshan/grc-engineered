@@ -181,6 +181,129 @@ python -m agents.tprm_triage_agent \
 
 ---
 
+## Troubleshooting
+
+### `ValueError: ANTHROPIC_API_KEY environment variable is not set.`
+
+The app requires a valid API key at startup. Make sure your `.env` file exists and contains your key:
+
+```bash
+cp .env.example .env
+# Open .env and set:
+# ANTHROPIC_API_KEY=sk-ant-...
+```
+
+Then confirm it loads correctly:
+
+```bash
+python -c "from dotenv import load_dotenv; load_dotenv(); import os; print(os.getenv('ANTHROPIC_API_KEY')[:8])"
+```
+
+---
+
+### `[Agent Error] Rate limited — please retry in a moment.`
+
+You've hit the Anthropic API rate limit. Wait 30–60 seconds and try again. If it happens frequently, check your [usage tier](https://console.anthropic.com) and consider upgrading.
+
+---
+
+### Questionnaire Responder returns generic answers with no source references
+
+The vector store is empty — no knowledge documents have been ingested yet. Add your CCF, policies, or questionnaire templates to the `knowledge/` directory, then ingest them:
+
+```python
+from core.vector_store import VectorStore
+from core.document_loader import ingest_knowledge_directory
+
+vs = VectorStore()
+results = ingest_knowledge_directory(vs)
+print(results)  # shows filenames and chunk counts
+```
+
+Supported formats: `.txt`, `.md`, `.pdf`, `.docx`.
+
+---
+
+### Agent output shows `"Failed to parse agent output"` or `PARSE_ERROR`
+
+The agent returned text that couldn't be parsed as JSON. This can happen when:
+
+- The model prefaced its JSON with a markdown code fence (` ```json `)
+- The response was cut off mid-stream (usually means the prompt + context is too large)
+
+**Fix:** Reduce the size of the input (e.g. truncate long policy text or artifact content) and retry. If it happens consistently for a specific agent, open an issue with the raw output.
+
+---
+
+### ChromaDB error on first run or after moving the project directory
+
+ChromaDB stores its index at the path in `CHROMA_DB_PATH` (default `./chroma_db`). If you move the project or the path no longer exists, delete the old index and re-ingest:
+
+```bash
+rm -rf ./chroma_db
+```
+
+Then re-run the ingestion step above.
+
+---
+
+### Streamlit UI shows a blank page or `ModuleNotFoundError`
+
+Make sure you activated your virtual environment before running Streamlit:
+
+```bash
+# Windows
+venv\Scripts\activate
+
+# macOS / Linux
+source venv/bin/activate
+
+pip install -r requirements.txt
+streamlit run ui/app.py
+```
+
+If you see a specific missing module, re-run `pip install -r requirements.txt` — a dependency may not have installed cleanly.
+
+---
+
+### Slack or Jira integration silently does nothing
+
+Both integrations fail gracefully by printing to console when credentials are missing. Check that your `.env` includes the required keys:
+
+```
+# Slack
+SLACK_BOT_TOKEN=xoxb-...
+SLACK_CHANNEL_ID=C0123456789
+
+# Jira
+JIRA_SERVER=https://yourorg.atlassian.net
+JIRA_EMAIL=you@yourorg.com
+JIRA_API_TOKEN=...
+```
+
+If the keys are set and it still doesn't work, run a quick test:
+
+```python
+from integrations.slack_notifier import SlackNotifier
+n = SlackNotifier()
+n.send("Test message from grc-engineered")
+```
+
+---
+
+### Tests are skipped or show `No API key found`
+
+Integration tests require a live API key. Set it in your environment before running pytest:
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...   # macOS/Linux
+$env:ANTHROPIC_API_KEY="sk-ant-..."   # Windows PowerShell
+
+pytest tests/
+```
+
+---
+
 ## Example Outputs
 
 Browse pre-generated outputs in [`outputs/examples/`](outputs/examples/) — no API key or setup needed.
