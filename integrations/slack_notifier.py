@@ -24,14 +24,19 @@ class SlackNotifier:
                 raise RuntimeError("slack-sdk not installed. Run: pip install slack-sdk")
         return self._client
 
+    # Slack section blocks are capped at 3000 chars
+    _SLACK_BLOCK_LIMIT = 3000
+
     def send(self, message: str, title: str | None = None) -> bool:
         if not self.token or not self.channel_id:
             print(f"[Slack stub] {title or 'GRC Alert'}: {message[:100]}")
             return False
         try:
+            if len(message) > self._SLACK_BLOCK_LIMIT:
+                message = message[: self._SLACK_BLOCK_LIMIT - 3] + "..."
             blocks = []
             if title:
-                blocks.append({"type": "header", "text": {"type": "plain_text", "text": title}})
+                blocks.append({"type": "header", "text": {"type": "plain_text", "text": title[:150]}})
             blocks.append({"type": "section", "text": {"type": "mrkdwn", "text": message}})
             self._get_client().chat_postMessage(channel=self.channel_id, blocks=blocks)
             return True

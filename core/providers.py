@@ -119,7 +119,11 @@ class AnthropicProvider(LLMProvider):
                                 "tool_use_id": block.id,
                                 "content": handle_tool_call(block.name, block.input),
                             })
-                    messages.append({"role": "user", "content": results})
+                    if results:
+                        messages.append({"role": "user", "content": results})
+                elif resp.stop_reason == "max_tokens":
+                    partial = "".join(b.text for b in resp.content if b.type == "text")
+                    return f"[Agent Warning] Output truncated at max_tokens limit.\n{partial}"
                 else:
                     return "".join(b.text for b in resp.content if b.type == "text")
             return "[Agent Error] Maximum tool iterations reached without end_turn."
@@ -237,7 +241,11 @@ class OllamaProvider(LLMProvider):
                     ],
                 })
                 for tc in msg.tool_calls:
-                    result = handle_tool_call(tc.function.name, json.loads(tc.function.arguments))
+                    try:
+                        tool_input = json.loads(tc.function.arguments)
+                    except json.JSONDecodeError:
+                        tool_input = {}
+                    result = handle_tool_call(tc.function.name, tool_input)
                     messages.append({"role": "tool", "tool_call_id": tc.id, "content": result})
 
             return "[Agent Error] Maximum tool iterations reached."

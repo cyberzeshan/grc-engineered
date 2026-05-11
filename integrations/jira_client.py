@@ -58,11 +58,16 @@ class JiraClient:
             print(f"[Jira error] {exc}")
             return ""
 
+    @staticmethod
+    def _safe_label(value: str) -> str:
+        """Sanitize a string for use as a Jira label (no spaces or dots)."""
+        return value.lower().replace(" ", "-").replace(".", "-")
+
     def create_evidence_remediation(self, control_id: str, recommendation: str) -> str:
         return self.create_ticket(
             summary=f"Evidence remediation required — {control_id}",
             description=recommendation,
-            labels=["evidence", "compliance", control_id],
+            labels=["evidence", "compliance", self._safe_label(control_id)],
             priority="High",
         )
 
@@ -73,6 +78,6 @@ class JiraClient:
         return self.create_ticket(
             summary=f"TPRM review — {vendor_name} ({tier})",
             description=desc,
-            labels=["tprm", tier.lower(), vendor_name.lower().replace(" ", "-")],
+            labels=["tprm", self._safe_label(tier), self._safe_label(vendor_name)],
             priority="High" if tier in ("Critical", "High") else "Medium",
         )

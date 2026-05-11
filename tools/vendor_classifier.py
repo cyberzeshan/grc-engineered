@@ -35,7 +35,7 @@ class VendorClassifier:
 
         if has_sensitive_data and (high_risk_geo or not soc2_available):
             tier = "Critical"
-        elif has_sensitive_data or (ai_flag and has_sensitive_data):
+        elif has_sensitive_data:
             tier = "High"
         elif ai_flag or not soc2_available:
             tier = "Medium"

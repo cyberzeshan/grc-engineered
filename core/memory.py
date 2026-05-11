@@ -94,3 +94,16 @@ class SessionMemory:
                     (limit,),
                 ).fetchall()
         return [dict(r) for r in rows]
+
+    def prune_old_runs(self, keep: int = 1000) -> int:
+        """Delete run_log rows beyond the most recent `keep` entries. Returns rows deleted."""
+        with self._conn() as conn:
+            deleted = conn.execute(
+                """
+                DELETE FROM run_log WHERE id NOT IN (
+                    SELECT id FROM run_log ORDER BY timestamp DESC LIMIT ?
+                )
+                """,
+                (keep,),
+            ).rowcount
+        return deleted

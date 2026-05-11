@@ -32,18 +32,24 @@ class VectorStore:
         self.collection.add(documents=documents, ids=ids, metadatas=metadatas)
 
     def query(self, query_text: str, n_results: int = 3) -> list[str]:
+        count = self.collection.count()
+        if count == 0:
+            return []
         results = self.collection.query(
             query_texts=[query_text],
-            n_results=min(n_results, self.collection.count() or 1),
+            n_results=min(n_results, count),
         )
         return results["documents"][0] if results["documents"] else []
 
     def query_with_metadata(
         self, query_text: str, n_results: int = 3
     ) -> list[dict]:
+        count = self.collection.count()
+        if count == 0:
+            return []
         results = self.collection.query(
             query_texts=[query_text],
-            n_results=min(n_results, self.collection.count() or 1),
+            n_results=min(n_results, count),
             include=["documents", "metadatas", "distances"],
         )
         out = []

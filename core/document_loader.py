@@ -49,8 +49,10 @@ def ingest_knowledge_directory(
     base = Path(knowledge_path or os.getenv("KNOWLEDGE_PATH", "./knowledge"))
     extensions = extensions or {".txt", ".md", ".pdf", ".docx"}
     results: dict[str, int] = {}
-    for file_path in base.rglob("*"):
-        if file_path.suffix.lower() in extensions and file_path.is_file():
+    for ext in extensions:
+        for file_path in base.rglob(f"*{ext}"):
+            if not file_path.is_file():
+                continue
             try:
                 n = vector_store.ingest_file(file_path)
                 results[file_path.name] = n
