@@ -25,24 +25,24 @@ This project is the practical implementation behind the **GRC Engineered** conte
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│                    Claude Orchestrator                    │
+│                    Claude Orchestrator                   │
 │               routes tasks · manages state               │
-└──────┬──────────┬──────────┬──────────┬─────────────────┘
+└──────┬──────────┬──────────┬──────────┬──────────────────┘
        │          │          │          │
   ┌────▼───┐ ┌────▼───┐ ┌───▼────┐ ┌───▼────┐
   │Control │ │Evidence│ │Quest.  │ │Policy  │
   │Mapping │ │Reviewer│ │Respond.│ │Drafter │
   └────────┘ └────────┘ └────────┘ └────────┘
   ┌────────┐ ┌────────┐ ┌────────┐
-  │ TPRM  │ │   AI   │ │ Audit  │
+  │ TPRM   │ │   AI   │ │ Audit  │
   │Triage  │ │Registry│ │Narrat. │
   └────────┘ └────────┘ └────────┘
        │          │          │
 ┌──────▼──────────▼──────────▼────────────────────────────┐
-│                 Shared Knowledge Layer                    │
-│   Vector Store · Framework Library · Evidence Store      │
-│       ChromaDB · ISO 27001 · SOC 2 · NIST CSF 2.0      │
-└──────────────────────────────────────────────────────────┘
+│                 Shared Knowledge Layer                  │
+│   Vector Store · Framework Library · Evidence Store     │
+│       ChromaDB · ISO 27001 · SOC 2 · NIST CSF 2.0       │
+└─────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -140,7 +140,7 @@ grc-engineered/
 
 ```bash
 # Clone the repo
-git clone https://github.com/YOUR_USERNAME/grc-engineered.git
+git clone https://github.com/cyberzeshan/grc-engineered.git
 cd grc-engineered
 
 # Create a virtual environment
