@@ -17,8 +17,6 @@
 
 Seven specialized agents, each with a defined schema and system prompt, handle the most time-consuming work in a GRC program: mapping controls across frameworks, reviewing evidence artifacts, triaging vendors, drafting policies, answering customer questionnaires, classifying AI systems under the EU AI Act, and writing audit narratives. All powered by the Claude API, all running locally.
 
-This project is the practical implementation behind the **GRC Engineered** content series — documenting what happens when you apply engineering discipline to governance, risk, and compliance.
-
 ---
 
 ## Architecture
@@ -388,9 +386,7 @@ Next Steps: Send AI questionnaire · Request SOC 2 · Legal DPA review
 
 ## About
 
-Built by [Zeshan Ahmad](https://linkedin.com/in/YOUR_LINKEDIN) — GRC Specialist at Cisco (Splunk), ISO 27001 & ISO 42001 Lead Auditor, CISA, CISM.
-
-**grc-engineered** is the GitHub home of the GRC Engineered personal brand — practical automation and engineering-grade thinking applied to governance, risk, and compliance.
+Built by [Zeshan Ahmad](https://linkedin.com/in/YOUR_LINKEDIN) — GRC Specialist, ISO 27001 & ISO 42001 Lead Auditor, CISA, CISM.
 
 ---
 
