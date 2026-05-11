@@ -17,8 +17,6 @@
 
 Seven specialized agents, each with a defined schema and system prompt, handle the most time-consuming work in a GRC program: mapping controls across frameworks, reviewing evidence artifacts, triaging vendors, drafting policies, answering customer questionnaires, classifying AI systems under the EU AI Act, and writing audit narratives. All powered by the Claude API, all running locally.
 
-This project is the practical implementation behind the **GRC Engineered** content series — documenting what happens when you apply engineering discipline to governance, risk, and compliance.
-
 ---
 
 ## Architecture
