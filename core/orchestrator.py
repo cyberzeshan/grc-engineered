@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import os
-
-import anthropic
-
 from agents.base_agent import DEFAULT_MODEL
+from core.providers import LLMProvider, create_provider
 
 AGENT_KEYS = [
     "control_mapping",
@@ -34,8 +31,7 @@ class GRCOrchestrator:
     """Routes natural-language GRC tasks to the right specialized agent."""
 
     def __init__(self) -> None:
-        self.client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
-        # Lazy-import agents to avoid circular imports
+        self._provider: LLMProvider = create_provider()
         self._agent_map: dict | None = None
 
     @property
@@ -61,14 +57,12 @@ class GRCOrchestrator:
         return self._agent_map
 
     def classify(self, task: str) -> str:
-        response = self.client.messages.create(
-            model=DEFAULT_MODEL,
-            max_tokens=20,
+        key = self._provider.complete(
             system=CLASSIFIER_SYSTEM,
             messages=[{"role": "user", "content": task}],
-        )
-        key = response.content[0].text.strip().lower()
-        # Validate — fall back to audit_narrative if unknown
+            max_tokens=20,
+            tools=[],
+        ).strip().lower()
         return key if key in AGENT_KEYS else "audit_narrative"
 
     def route(self, task: str) -> tuple[str, str]:

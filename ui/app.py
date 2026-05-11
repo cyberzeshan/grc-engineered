@@ -24,10 +24,25 @@ st.set_page_config(
 
 # ── Sidebar ──────────────────────────────────────────────────────────────────
 st.sidebar.title("🔐 GRC Agent Platform")
-st.sidebar.caption("Powered by Claude claude-sonnet-4-6")
 
-if not os.getenv("ANTHROPIC_API_KEY"):
-    st.sidebar.error("ANTHROPIC_API_KEY not set. Add it to your .env file.")
+_provider = os.getenv("LLM_PROVIDER", "anthropic").lower()
+if _provider == "ollama":
+    _model = os.getenv("OLLAMA_MODEL", "llama3.2")
+    st.sidebar.caption(f"Powered by Ollama · {_model}")
+    _base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+    try:
+        import httpx
+        httpx.get(f"{_base_url}/api/tags", timeout=2)
+    except Exception:
+        st.sidebar.error(
+            f"Ollama not reachable at {_base_url}. "
+            "Make sure Ollama is running: `ollama serve`"
+        )
+else:
+    _model = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6")
+    st.sidebar.caption(f"Powered by Claude · {_model}")
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        st.sidebar.error("ANTHROPIC_API_KEY not set. Add it to your .env file.")
 
 agent_choice = st.sidebar.radio(
     "Select Agent",
@@ -44,7 +59,10 @@ agent_choice = st.sidebar.radio(
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("**Resources**")
-st.sidebar.markdown("[GitHub Repository](#) | [README](#)")
+st.sidebar.markdown(
+    "[GitHub Repository](https://github.com/cyberzeshan/grc-engineered) | "
+    "[README](https://github.com/cyberzeshan/grc-engineered#readme)"
+)
 
 
 # ── Helper ───────────────────────────────────────────────────────────────────

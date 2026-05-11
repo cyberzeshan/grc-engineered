@@ -14,6 +14,32 @@ keywords = [
     "tprm", "cybersecurity", "oscal"
 ]
 
+dependencies = [
+    "anthropic>=0.40.0",
+    "chromadb>=0.5.0",
+    "pydantic>=2.9.0",
+    "streamlit>=1.40.0",
+    "python-dotenv>=1.0.0",
+    "pypdf>=5.0.0",
+    "python-docx>=1.1.0",
+    "openpyxl>=3.1.0",
+    "httpx>=0.27.0",
+]
+
+[project.optional-dependencies]
+# Local LLM support via Ollama  (set LLM_PROVIDER=ollama in .env)
+ollama = ["openai>=1.0.0"]
+# Third-party integrations
+slack = ["slack-sdk>=3.33.0"]
+# Everything at once
+all = ["openai>=1.0.0", "slack-sdk>=3.33.0"]
+# Development tools
+dev = [
+    "ruff>=0.7.0",
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+]
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"

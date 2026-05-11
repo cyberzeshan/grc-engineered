@@ -65,7 +65,8 @@ This project is the practical implementation behind the **GRC Engineered** conte
 
 | Layer | Technology |
 |-------|-----------|
-| AI Reasoning | [Anthropic Claude API](https://anthropic.com) (`claude-sonnet-4-5`) |
+| AI Reasoning | [Anthropic Claude](https://anthropic.com) (`claude-sonnet-4-6`) **or** [Ollama](https://ollama.com) (local, free) |
+| Package Manager | [uv](https://docs.astral.sh/uv/) — fast Python package manager |
 | Vector Store | [ChromaDB](https://trychroma.com) — local, no server needed |
 | Document Ingestion | [pypdf](https://pypdf.readthedocs.io) + custom chunking pipeline |
 | Data Models | [Pydantic v2](https://docs.pydantic.dev) |
@@ -134,50 +135,77 @@ grc-engineered/
 ### Prerequisites
 
 - Python 3.11+
-- An [Anthropic API key](https://console.anthropic.com)
+- **One of:** an [Anthropic API key](https://console.anthropic.com) **or** [Ollama](https://ollama.com) running locally (free)
 
-### Installation
+---
+
+### Option A — Anthropic Claude (recommended for production)
 
 ```bash
 # Clone the repo
 git clone https://github.com/cyberzeshan/grc-engineered.git
 cd grc-engineered
 
-# Create a virtual environment
-python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
+# Install uv (fast Python package manager)
+pip install uv
 
-# Install dependencies
-pip install -r requirements.txt
+# Create a virtual environment and install dependencies
+uv venv
+uv pip install -r requirements.txt
 
-# Set up environment variables
+# Set up environment
 cp .env.example .env
-# Edit .env and add your ANTHROPIC_API_KEY
+nano .env          # add your ANTHROPIC_API_KEY; set LLM_PROVIDER=anthropic
 ```
+
+---
+
+### Option B — Ollama (free, runs entirely on your machine)
+
+Great for students or anyone without an Anthropic account.
+
+```bash
+# 1. Install Ollama from https://ollama.com and start it
+ollama serve                    # keep this running in one terminal
+
+# 2. Pull a model (llama3.2 is a good default, ~2 GB)
+ollama pull llama3.2
+
+# 3. Clone and install
+git clone https://github.com/cyberzeshan/grc-engineered.git
+cd grc-engineered
+pip install uv
+uv venv
+uv pip install -r requirements.txt
+
+# 4. Set up environment
+cp .env.example .env
+nano .env          # set LLM_PROVIDER=ollama (no API key needed)
+```
+
+**Models with tool-use support** (needed for the Control Mapping agent):
+
+| Model | Size | Notes |
+|---|---|---|
+| `llama3.2` | ~2 GB | Default, good balance |
+| `llama3.1` | ~4 GB | Stronger reasoning |
+| `qwen2.5` | ~4 GB | Excellent for structured output |
+| `mistral-nemo` | ~7 GB | Strong tool use |
+
+---
 
 ### Run the Streamlit UI
 
 ```bash
+# Activate the virtual environment first
+source .venv/bin/activate       # Windows: .venv\Scripts\activate
+
 streamlit run ui/app.py
 ```
 
 Open `http://localhost:8501` in your browser. Select any agent from the sidebar, fill in the form, and click **Run Agent**.
 
-### Run an Agent from the CLI
-
-```bash
-# Control Mapping Agent
-python -m agents.control_mapping_agent \
-  --control-id "A.8.2" \
-  --source "ISO_27001_2022" \
-  --targets "SOC2_TSC,NIST_CSF_2"
-
-# TPRM Triage Agent
-python -m agents.tprm_triage_agent \
-  --vendor "Acme AI Tools" \
-  --data-types "PII,financial" \
-  --uses-ai true
-```
+The sidebar shows which provider is active and warns you if Ollama is not reachable.
 
 ---
 
@@ -185,15 +213,20 @@ python -m agents.tprm_triage_agent \
 
 ### `ValueError: ANTHROPIC_API_KEY environment variable is not set.`
 
-The app requires a valid API key at startup. Make sure your `.env` file exists and contains your key:
+If you are using Anthropic, make sure your `.env` file exists and contains your key:
 
 ```bash
 cp .env.example .env
-# Open .env and set:
-# ANTHROPIC_API_KEY=sk-ant-...
+nano .env   # set ANTHROPIC_API_KEY=sk-ant-...  and  LLM_PROVIDER=anthropic
 ```
 
-Then confirm it loads correctly:
+If you want to use Ollama instead (no API key needed):
+
+```bash
+nano .env   # set LLM_PROVIDER=ollama
+```
+
+Confirm the key loads correctly (Anthropic only):
 
 ```bash
 python -c "from dotenv import load_dotenv; load_dotenv(); import os; print(os.getenv('ANTHROPIC_API_KEY')[:8])"
