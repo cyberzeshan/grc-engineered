@@ -56,11 +56,18 @@ class ControlMappingAgent(BaseAgent):
 
     def _handle_tool_call(self, tool_name: str, tool_input: dict) -> str:
         if tool_name == "read_framework_file":
-            filename = tool_input.get("framework_name", "")
-            file_path = self.frameworks_path / filename
+            raw_name = tool_input.get("framework_name", "")
+            # Reject any path that tries to traverse outside frameworks/ directory
+            safe_name = Path(raw_name).name
+            if safe_name != raw_name or not safe_name or safe_name.startswith("."):
+                return f"Invalid filename: '{raw_name}'. Use a plain filename with no path components."
+            file_path = self.frameworks_path / safe_name
+            # Confirm resolved path is still inside frameworks_path (defense-in-depth)
+            if not str(file_path.resolve()).startswith(str(self.frameworks_path.resolve())):
+                return "Access denied: path outside knowledge/frameworks/."
             if file_path.exists():
                 return file_path.read_text(encoding="utf-8", errors="replace")[:8000]
-            return f"File not found: {filename}. Available: {list(self.frameworks_path.glob('*'))}"
+            return f"File not found: {safe_name}. Available: {list(self.frameworks_path.glob('*'))}"
         return super()._handle_tool_call(tool_name, tool_input)
 
     def map_control(self, inp: ControlMappingInput) -> ControlMappingOutput:
