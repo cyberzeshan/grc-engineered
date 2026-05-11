@@ -15,7 +15,7 @@
 
 **grc-engineered** is a multi-agent GRC automation platform that treats compliance as a software problem — not a spreadsheet problem.
 
-Seven specialized agents, each with a defined schema and system prompt, handle the most time-consuming work in a GRC program: mapping controls across frameworks, reviewing evidence artifacts, triaging vendors, drafting policies, answering customer questionnaires, classifying AI systems under the EU AI Act, and writing audit narratives. All powered by the Claude API, all running locally.
+Seven specialized agents, each with a defined schema and system prompt, handle the most time-consuming work in a GRC program: mapping controls across frameworks, reviewing evidence artifacts, triaging vendors, drafting policies, answering customer questionnaires, classifying AI systems under the EU AI Act, and writing audit narratives. All powered by the Claude API or a local Ollama model — all running on your machine.
 
 ---
 
@@ -82,11 +82,12 @@ grc-engineered/
 │   ├── orchestrator.py          # Routes tasks to agents; manages conversation state
 │   ├── memory.py                # SQLite-backed agent state
 │   ├── vector_store.py          # ChromaDB wrapper: ingest + semantic query
-│   ├── document_loader.py       # PDF/DOCX chunking pipeline
+│   ├── document_loader.py       # PDF/DOCX/Markdown ingestion pipeline
+│   ├── providers.py             # LLM provider abstraction (Anthropic + Ollama)
 │   └── models.py                # Pydantic schemas for all agent I/O
 │
 ├── agents/
-│   ├── base_agent.py            # BaseAgent: Claude call, tool use, retry logic
+│   ├── base_agent.py            # BaseAgent: provider call, tool use, retry logic
 │   ├── control_mapping_agent.py
 │   ├── evidence_reviewer_agent.py
 │   ├── questionnaire_responder_agent.py
@@ -106,6 +107,10 @@ grc-engineered/
 │   ├── evidence_scorer.py       # Freshness + completeness scoring
 │   └── vendor_classifier.py     # Tier 1/2/3 and AI-class classification
 │
+├── integrations/
+│   ├── slack_notifier.py        # Slack alerts for evidence and vendor events
+│   └── jira_client.py           # Jira ticket creation for remediation actions
+│
 ├── outputs/
 │   └── examples/                # Sample outputs — no API key needed to view
 │       ├── control_mapping_example.json
@@ -115,12 +120,9 @@ grc-engineered/
 ├── ui/
 │   └── app.py                   # Streamlit demo dashboard
 │
-├── tests/
-│   ├── test_control_mapping.py
-│   ├── test_evidence_reviewer.py
-│   └── test_tprm_triage.py
+├── tests/                       # Unit + integration test suite
 │
-├── .env.example
+├── .env.example                 # Environment variable template
 ├── requirements.txt
 ├── pyproject.toml
 └── README.md
@@ -128,209 +130,199 @@ grc-engineered/
 
 ---
 
-## Quick Start
+## Installation
 
 ### Prerequisites
 
-- Python 3.11+
-- **One of:** an [Anthropic API key](https://console.anthropic.com) **or** [Ollama](https://ollama.com) running locally (free)
+- **Python 3.11 or newer** — check with `python --version` (or `python3 --version` on Mac/Linux)
+- **Git** — check with `git --version`
+- **One of:**
+  - An [Anthropic API key](https://console.anthropic.com) (paid, recommended for production)
+  - [Ollama](https://ollama.com) running locally (free, good for students and local experimentation)
 
 ---
 
-### Option A — Anthropic Claude (recommended for production)
+### Step 1 — Install uv
+
+`uv` is a fast Python package manager that replaces `pip` + `venv`.
+
+**Windows (PowerShell):**
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+**macOS / Linux:**
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+After installing, restart your terminal so `uv` is available in your PATH.
+
+---
+
+### Step 2 — Clone the repository
 
 ```bash
-# Clone the repo
 git clone https://github.com/cyberzeshan/grc-engineered.git
 cd grc-engineered
-
-# Install uv (fast Python package manager)
-pip install uv
-
-# Create a virtual environment and install dependencies
-uv venv
-uv pip install -r requirements.txt
-
-# Set up environment
-cp .env.example .env
-nano .env          # add your ANTHROPIC_API_KEY; set LLM_PROVIDER=anthropic
 ```
 
 ---
 
-### Option B — Ollama (free, runs entirely on your machine)
-
-Great for students or anyone without an Anthropic account.
+### Step 3 — Create a virtual environment and install dependencies
 
 ```bash
-# 1. Install Ollama from https://ollama.com and start it
-ollama serve                    # keep this running in one terminal
-
-# 2. Pull a model (llama3.2 is a good default, ~2 GB)
-ollama pull llama3.2
-
-# 3. Clone and install
-git clone https://github.com/cyberzeshan/grc-engineered.git
-cd grc-engineered
-pip install uv
 uv venv
 uv pip install -r requirements.txt
+```
 
-# 4. Set up environment
+**For Ollama support** (optional — only needed if using `LLM_PROVIDER=ollama`):
+```bash
+uv pip install -e ".[ollama]"
+```
+
+**For Slack integration** (optional):
+```bash
+uv pip install -e ".[slack]"
+```
+
+**Install everything at once:**
+```bash
+uv pip install -e ".[all]"
+```
+
+---
+
+### Step 4 — Activate the virtual environment
+
+You must activate the virtual environment before running any Python commands or Streamlit.
+
+**Windows (PowerShell):**
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+**Windows (Command Prompt):**
+```cmd
+.venv\Scripts\activate.bat
+```
+
+**macOS / Linux:**
+```bash
+source .venv/bin/activate
+```
+
+Your prompt will show `(.venv)` when the environment is active.
+
+---
+
+### Step 5 — Configure your environment
+
+Copy the example file and fill in your values:
+
+**Windows (PowerShell):**
+```powershell
+Copy-Item .env.example .env
+notepad .env
+```
+
+**macOS / Linux:**
+```bash
 cp .env.example .env
-nano .env          # set LLM_PROVIDER=ollama (no API key needed)
+nano .env        # or: open .env (Mac), gedit .env (Ubuntu)
+```
+
+**Minimum required settings:**
+
+For Anthropic Claude:
+```env
+LLM_PROVIDER=anthropic
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+For Ollama (no API key needed):
+```env
+LLM_PROVIDER=ollama
+OLLAMA_MODEL=llama3.2
+```
+
+Full environment variable reference is in `.env.example`.
+
+---
+
+### Step 6 — (Ollama only) Install and start Ollama
+
+Skip this step if you are using Anthropic Claude.
+
+1. Download and install Ollama from [https://ollama.com](https://ollama.com) — it has installers for Windows, macOS, and Linux.
+
+2. Start the Ollama service (keep this terminal open):
+```bash
+ollama serve
+```
+
+3. Pull a model (do this once):
+```bash
+ollama pull llama3.2
 ```
 
 **Models with tool-use support** (needed for the Control Mapping agent):
 
 | Model | Size | Notes |
 |---|---|---|
-| `llama3.2` | ~2 GB | Default, good balance |
+| `llama3.2` | ~2 GB | Default, good balance of speed and quality |
 | `llama3.1` | ~4 GB | Stronger reasoning |
 | `qwen2.5` | ~4 GB | Excellent for structured output |
 | `mistral-nemo` | ~7 GB | Strong tool use |
 
 ---
 
-### Run the Streamlit UI
+### Step 7 — Run the app
 
 ```bash
-# Activate the virtual environment first
-source .venv/bin/activate       # Windows: .venv\Scripts\activate
-
 streamlit run ui/app.py
 ```
 
 Open `http://localhost:8501` in your browser. Select any agent from the sidebar, fill in the form, and click **Run Agent**.
 
-The sidebar shows which provider is active and warns you if Ollama is not reachable.
+The sidebar shows which LLM provider is active and warns you if Ollama is unreachable.
 
 ---
 
-## Troubleshooting
+## Environment Variables Reference
 
-### `ValueError: ANTHROPIC_API_KEY environment variable is not set.`
+All variables are optional unless marked required.
 
-If you are using Anthropic, make sure your `.env` file exists and contains your key:
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `LLM_PROVIDER` | | `anthropic` | `anthropic` or `ollama` |
+| `ANTHROPIC_API_KEY` | If Anthropic | — | Your API key from console.anthropic.com |
+| `ANTHROPIC_MODEL` | | `claude-sonnet-4-6` | Model to use |
+| `OLLAMA_BASE_URL` | | `http://localhost:11434` | Ollama server URL |
+| `OLLAMA_MODEL` | | `llama3.2` | Model to use with Ollama |
+| `SLACK_BOT_TOKEN` | | — | `xoxb-...` token for Slack alerts |
+| `SLACK_CHANNEL_ID` | | — | Channel ID (not name) for Slack alerts |
+| `JIRA_SERVER` | | — | `https://yourorg.atlassian.net` |
+| `JIRA_EMAIL` | | — | Email address for Jira auth |
+| `JIRA_API_TOKEN` | | — | Jira API token |
+| `CHROMA_DB_PATH` | | `./chroma_db` | Where ChromaDB stores its index |
+| `SQLITE_DB_PATH` | | `./memory.db` | Where session memory is stored |
+| `KNOWLEDGE_PATH` | | `./knowledge` | Directory of documents to ingest |
+| `OUTPUTS_PATH` | | `./outputs` | Where agent outputs are written |
+
+---
+
+## Running Tests
 
 ```bash
-cp .env.example .env
-nano .env   # set ANTHROPIC_API_KEY=sk-ant-...  and  LLM_PROVIDER=anthropic
-```
+# Unit tests only (no API key required)
+pytest tests/ -m "not needs_llm"
 
-If you want to use Ollama instead (no API key needed):
-
-```bash
-nano .env   # set LLM_PROVIDER=ollama
-```
-
-Confirm the key loads correctly (Anthropic only):
-
-```bash
-python -c "from dotenv import load_dotenv; load_dotenv(); import os; print(os.getenv('ANTHROPIC_API_KEY')[:8])"
-```
-
----
-
-### `[Agent Error] Rate limited — please retry in a moment.`
-
-You've hit the Anthropic API rate limit. Wait 30–60 seconds and try again. If it happens frequently, check your [usage tier](https://console.anthropic.com) and consider upgrading.
-
----
-
-### Questionnaire Responder returns generic answers with no source references
-
-The vector store is empty — no knowledge documents have been ingested yet. Add your CCF, policies, or questionnaire templates to the `knowledge/` directory, then ingest them:
-
-```python
-from core.vector_store import VectorStore
-from core.document_loader import ingest_knowledge_directory
-
-vs = VectorStore()
-results = ingest_knowledge_directory(vs)
-print(results)  # shows filenames and chunk counts
-```
-
-Supported formats: `.txt`, `.md`, `.pdf`, `.docx`.
-
----
-
-### Agent output shows `"Failed to parse agent output"` or `PARSE_ERROR`
-
-The agent returned text that couldn't be parsed as JSON. This can happen when:
-
-- The model prefaced its JSON with a markdown code fence (` ```json `)
-- The response was cut off mid-stream (usually means the prompt + context is too large)
-
-**Fix:** Reduce the size of the input (e.g. truncate long policy text or artifact content) and retry. If it happens consistently for a specific agent, open an issue with the raw output.
-
----
-
-### ChromaDB error on first run or after moving the project directory
-
-ChromaDB stores its index at the path in `CHROMA_DB_PATH` (default `./chroma_db`). If you move the project or the path no longer exists, delete the old index and re-ingest:
-
-```bash
-rm -rf ./chroma_db
-```
-
-Then re-run the ingestion step above.
-
----
-
-### Streamlit UI shows a blank page or `ModuleNotFoundError`
-
-Make sure you activated your virtual environment before running Streamlit:
-
-```bash
-# Windows
-venv\Scripts\activate
-
-# macOS / Linux
-source venv/bin/activate
-
-pip install -r requirements.txt
-streamlit run ui/app.py
-```
-
-If you see a specific missing module, re-run `pip install -r requirements.txt` — a dependency may not have installed cleanly.
-
----
-
-### Slack or Jira integration silently does nothing
-
-Both integrations fail gracefully by printing to console when credentials are missing. Check that your `.env` includes the required keys:
-
-```
-# Slack
-SLACK_BOT_TOKEN=xoxb-...
-SLACK_CHANNEL_ID=C0123456789
-
-# Jira
-JIRA_SERVER=https://yourorg.atlassian.net
-JIRA_EMAIL=you@yourorg.com
-JIRA_API_TOKEN=...
-```
-
-If the keys are set and it still doesn't work, run a quick test:
-
-```python
-from integrations.slack_notifier import SlackNotifier
-n = SlackNotifier()
-n.send("Test message from grc-engineered")
-```
-
----
-
-### Tests are skipped or show `No API key found`
-
-Integration tests require a live API key. Set it in your environment before running pytest:
-
-```bash
-export ANTHROPIC_API_KEY=sk-ant-...   # macOS/Linux
-$env:ANTHROPIC_API_KEY="sk-ant-..."   # Windows PowerShell
-
+# All tests including live LLM calls (requires API key or Ollama)
 pytest tests/
+
+# Verbose output
+pytest tests/ -v
 ```
 
 ---
@@ -370,6 +362,266 @@ Next Steps: Send AI questionnaire · Request SOC 2 · Legal DPA review
 - ISO 42001:2023 (AI Management Systems)
 - EU AI Act (risk classification — Articles 5, 6, 50)
 - NIST AI RMF 1.0
+
+---
+
+## Troubleshooting
+
+### `ValueError: ANTHROPIC_API_KEY is not set`
+
+Your `.env` file is missing or the key isn't being loaded. Check the following:
+
+1. Make sure `.env` exists at the project root (not `.env.example`):
+
+   **Windows:** `dir .env`  
+   **macOS/Linux:** `ls -la .env`
+
+2. Confirm the key is in the file:
+
+   **Windows (PowerShell):**
+   ```powershell
+   Get-Content .env | Select-String "ANTHROPIC_API_KEY"
+   ```
+   **macOS/Linux:**
+   ```bash
+   grep ANTHROPIC_API_KEY .env
+   ```
+
+3. If you want to use Ollama instead (no API key needed), set `LLM_PROVIDER=ollama` in `.env`.
+
+---
+
+### `ModuleNotFoundError` when running any command
+
+The virtual environment is either not activated or the dependencies are not installed.
+
+**Windows (PowerShell):**
+```powershell
+.venv\Scripts\Activate.ps1
+uv pip install -r requirements.txt
+```
+
+**macOS/Linux:**
+```bash
+source .venv/bin/activate
+uv pip install -r requirements.txt
+```
+
+If you see `cannot run scripts / execution policy` on Windows, run this first:
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+---
+
+### `ModuleNotFoundError: No module named 'openai'`
+
+Ollama support requires the `openai` package, which is an optional dependency:
+
+```bash
+uv pip install "openai>=1.0.0"
+# or
+uv pip install -e ".[ollama]"
+```
+
+---
+
+### Ollama: `[Agent Error] Connection refused` or provider shows as unreachable
+
+Ollama must be running before you start the app.
+
+**Start Ollama:**
+
+- **Windows / macOS:** Open the Ollama desktop app, or run `ollama serve` in a separate terminal.
+- **Linux:** `ollama serve` in a separate terminal, or enable the systemd service:
+  ```bash
+  sudo systemctl enable --now ollama
+  ```
+
+Confirm Ollama is running:
+```bash
+curl http://localhost:11434/api/tags
+```
+
+If you changed `OLLAMA_BASE_URL` in `.env`, make sure it matches where Ollama is actually listening.
+
+---
+
+### Ollama: agent returns empty or nonsense output
+
+Not all Ollama models support tool use. Make sure you are using a compatible model:
+
+```bash
+ollama pull llama3.2    # recommended default
+```
+
+Set it in `.env`:
+```env
+OLLAMA_MODEL=llama3.2
+```
+
+Smaller models like `phi3` or `tinyllama` do not support structured tool calls and will produce unpredictable output.
+
+---
+
+### `[Agent Error] Rate limited — please retry in a moment.`
+
+You have hit the Anthropic API rate limit. Wait 30–60 seconds and retry. If it happens frequently:
+
+- Check your [usage dashboard](https://console.anthropic.com) and consider upgrading your tier.
+- Switch to Ollama (`LLM_PROVIDER=ollama`) for unlimited local usage during testing.
+
+---
+
+### Questionnaire Responder returns generic answers with no source references
+
+The vector store is empty — no knowledge documents have been ingested. Add your CCF, policies, or questionnaire templates to the `knowledge/` directory, then run:
+
+```python
+from core.vector_store import VectorStore
+from core.document_loader import ingest_knowledge_directory
+
+vs = VectorStore()
+results = ingest_knowledge_directory(vs)
+print(results)   # shows filenames and chunk counts
+```
+
+Supported formats: `.txt`, `.md`, `.pdf`, `.docx`.
+
+---
+
+### Agent output shows `"Failed to parse agent output"` or `PARSE_ERROR`
+
+The model returned text that could not be parsed as structured JSON. Common causes:
+
+- The model prefaced its output with a markdown code fence (` ```json `)
+- The prompt + context is too large and the output was truncated mid-response
+
+**Fixes:**
+- Reduce the size of the input (truncate long policy text or artifact content) and retry.
+- If using Ollama, try a larger or more capable model (`llama3.1`, `qwen2.5`).
+- If it happens consistently for a specific agent, open an issue with the raw output.
+
+---
+
+### ChromaDB error on first run or after moving the project directory
+
+ChromaDB stores its index at `CHROMA_DB_PATH` (default `./chroma_db`). If the path is broken or the index is corrupt, delete it and re-ingest:
+
+**Windows (PowerShell):**
+```powershell
+Remove-Item -Recurse -Force .\chroma_db
+```
+
+**macOS/Linux:**
+```bash
+rm -rf ./chroma_db
+```
+
+Then re-run the ingestion step (see Questionnaire Responder section above).
+
+---
+
+### Streamlit shows a blank page or fails to start
+
+1. Make sure the virtual environment is activated (see the activation commands above).
+
+2. Make sure Streamlit is installed:
+   ```bash
+   uv pip install streamlit
+   ```
+
+3. Run from the project root, not from inside the `ui/` directory:
+   ```bash
+   streamlit run ui/app.py
+   ```
+
+4. If port 8501 is already in use, specify another port:
+   ```bash
+   streamlit run ui/app.py --server.port 8502
+   ```
+
+---
+
+### Slack or Jira integration silently does nothing
+
+Both integrations fail gracefully by printing to console when credentials are missing. Verify your `.env` contains the required keys:
+
+```env
+# Slack
+SLACK_BOT_TOKEN=xoxb-...
+SLACK_CHANNEL_ID=C0123456789
+
+# Jira
+JIRA_SERVER=https://yourorg.atlassian.net
+JIRA_EMAIL=you@yourorg.com
+JIRA_API_TOKEN=...
+```
+
+Quick test for Slack:
+```python
+from integrations.slack_notifier import SlackNotifier
+n = SlackNotifier()
+print(n.send("Test message from grc-engineered"))
+# True = message sent; False = credentials missing or error
+```
+
+For Jira, make sure `slack-sdk` is installed:
+```bash
+uv pip install "slack-sdk>=3.33.0"
+# or
+uv pip install -e ".[slack]"
+```
+
+---
+
+### Tests are skipped or show `No API key found`
+
+Integration tests require a live API connection. Set credentials in your environment before running pytest:
+
+**Windows (PowerShell):**
+```powershell
+$env:ANTHROPIC_API_KEY = "sk-ant-..."
+pytest tests/
+```
+
+**macOS/Linux:**
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+pytest tests/
+```
+
+To skip live LLM tests and only run unit tests:
+```bash
+pytest tests/ -m "not needs_llm"
+```
+
+---
+
+### Python version error (`requires Python >=3.11`)
+
+Check your Python version:
+```bash
+python --version
+# or on macOS/Linux:
+python3 --version
+```
+
+If you are on an older version:
+
+- **Windows:** Download Python 3.11+ from [python.org](https://python.org/downloads) and reinstall.
+- **macOS:** Use [Homebrew](https://brew.sh): `brew install python@3.11`
+- **Ubuntu/Debian:**
+  ```bash
+  sudo add-apt-repository ppa:deadsnakes/ppa
+  sudo apt update
+  sudo apt install python3.11 python3.11-venv
+  ```
+
+Make sure `uv` uses the right version:
+```bash
+uv venv --python 3.11
+```
 
 ---
 
