@@ -138,13 +138,13 @@ grc-engineered/
 - **Git** — check with `git --version`
 - **One of:**
   - An [Anthropic API key](https://console.anthropic.com) (paid, recommended for production)
-  - [Ollama](https://ollama.com) running locally (free, good for students and local experimentation)
+  - [Ollama](https://ollama.com) running locally (free, great for students)
 
 ---
 
-### Step 1 — Install uv
+### Step 1 — Install uv (one-time setup)
 
-`uv` is a fast Python package manager that replaces `pip` + `venv`.
+`uv` is a fast Python package manager. Install it once and never think about it again.
 
 **Windows (PowerShell):**
 ```powershell
@@ -156,7 +156,7 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-After installing, restart your terminal so `uv` is available in your PATH.
+Restart your terminal after installing so `uv` is on your PATH.
 
 ---
 
@@ -169,56 +169,7 @@ cd grc-engineered
 
 ---
 
-### Step 3 — Create a virtual environment and install dependencies
-
-```bash
-uv venv
-uv pip install -r requirements.txt
-```
-
-**For Ollama support** (optional — only needed if using `LLM_PROVIDER=ollama`):
-```bash
-uv pip install -e ".[ollama]"
-```
-
-**For Slack integration** (optional):
-```bash
-uv pip install -e ".[slack]"
-```
-
-**Install everything at once:**
-```bash
-uv pip install -e ".[all]"
-```
-
----
-
-### Step 4 — Activate the virtual environment
-
-You must activate the virtual environment before running any Python commands or Streamlit.
-
-**Windows (PowerShell):**
-```powershell
-.venv\Scripts\Activate.ps1
-```
-
-**Windows (Command Prompt):**
-```cmd
-.venv\Scripts\activate.bat
-```
-
-**macOS / Linux:**
-```bash
-source .venv/bin/activate
-```
-
-Your prompt will show `(.venv)` when the environment is active.
-
----
-
-### Step 5 — Configure your environment
-
-Copy the example file and fill in your values:
+### Step 3 — Configure your environment
 
 **Windows (PowerShell):**
 ```powershell
@@ -229,10 +180,10 @@ notepad .env
 **macOS / Linux:**
 ```bash
 cp .env.example .env
-nano .env        # or: open .env (Mac), gedit .env (Ubuntu)
+nano .env
 ```
 
-**Minimum required settings:**
+Set the minimum required values:
 
 For Anthropic Claude:
 ```env
@@ -240,31 +191,29 @@ LLM_PROVIDER=anthropic
 ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-For Ollama (no API key needed):
+For Ollama (no API key needed — see Step 4 below):
 ```env
 LLM_PROVIDER=ollama
 OLLAMA_MODEL=llama3.2
 ```
 
-Full environment variable reference is in `.env.example`.
-
 ---
 
-### Step 6 — (Ollama only) Install and start Ollama
+### Step 4 — (Ollama only) Install and start Ollama
 
 Skip this step if you are using Anthropic Claude.
 
-1. Download and install Ollama from [https://ollama.com](https://ollama.com) — it has installers for Windows, macOS, and Linux.
+1. Download and install Ollama from [https://ollama.com](https://ollama.com) — installers for Windows, macOS, and Linux.
 
 2. Start the Ollama service (keep this terminal open):
-```bash
-ollama serve
-```
+   ```bash
+   ollama serve
+   ```
 
 3. Pull a model (do this once):
-```bash
-ollama pull llama3.2
-```
+   ```bash
+   ollama pull llama3.2
+   ```
 
 **Models with tool-use support** (needed for the Control Mapping agent):
 
@@ -277,15 +226,57 @@ ollama pull llama3.2
 
 ---
 
-### Step 7 — Run the app
+### Step 5 — Run the app
 
+This single command installs all dependencies and launches the dashboard:
+
+**macOS / Linux:**
 ```bash
-streamlit run ui/app.py
+chmod +x run.sh
+./run.sh
 ```
+
+**Windows:**
+```cmd
+run.bat
+```
+
+That's it. `uv sync` reads `uv.lock`, creates the virtual environment, installs every dependency at the exact pinned versions, then starts Streamlit — all in one go. You only need to run this once after cloning (or after pulling updates from the repo).
 
 Open `http://localhost:8501` in your browser. Select any agent from the sidebar, fill in the form, and click **Run Agent**.
 
 The sidebar shows which LLM provider is active and warns you if Ollama is unreachable.
+
+---
+
+### Running tests or individual commands
+
+After the first `uv sync`, you can run any command inside the project's virtual environment using `uv run`:
+
+```bash
+# Run tests
+uv run pytest tests/
+
+# Unit tests only (no API key required)
+uv run pytest tests/ -m "not needs_llm"
+
+# Lint
+uv run ruff check .
+```
+
+Or activate the venv manually and use commands directly:
+
+**Windows (PowerShell):**
+```powershell
+.venv\Scripts\Activate.ps1
+pytest tests/
+```
+
+**macOS / Linux:**
+```bash
+source .venv/bin/activate
+pytest tests/
+```
 
 ---
 
@@ -316,13 +307,13 @@ All variables are optional unless marked required.
 
 ```bash
 # Unit tests only (no API key required)
-pytest tests/ -m "not needs_llm"
+uv run pytest tests/ -m "not needs_llm"
 
 # All tests including live LLM calls (requires API key or Ollama)
-pytest tests/
+uv run pytest tests/
 
 # Verbose output
-pytest tests/ -v
+uv run pytest tests/ -v
 ```
 
 ---
@@ -393,35 +384,20 @@ Your `.env` file is missing or the key isn't being loaded. Check the following:
 
 ### `ModuleNotFoundError` when running any command
 
-The virtual environment is either not activated or the dependencies are not installed.
+The dependencies haven't been synced yet. Run:
 
-**Windows (PowerShell):**
-```powershell
-.venv\Scripts\Activate.ps1
-uv pip install -r requirements.txt
-```
-
-**macOS/Linux:**
 ```bash
-source .venv/bin/activate
-uv pip install -r requirements.txt
+uv sync --system-certs
 ```
 
-If you see `cannot run scripts / execution policy` on Windows, run this first:
+Or just re-run the start script — it calls `uv sync` automatically:
+
+**macOS/Linux:** `./run.sh`  
+**Windows:** `run.bat`
+
+If you see `cannot run scripts / execution policy` on Windows, run this first in PowerShell:
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-```
-
----
-
-### `ModuleNotFoundError: No module named 'openai'`
-
-Ollama support requires the `openai` package, which is an optional dependency:
-
-```bash
-uv pip install "openai>=1.0.0"
-# or
-uv pip install -e ".[ollama]"
 ```
 
 ---
@@ -524,21 +500,20 @@ Then re-run the ingestion step (see Questionnaire Responder section above).
 
 ### Streamlit shows a blank page or fails to start
 
-1. Make sure the virtual environment is activated (see the activation commands above).
+1. Use the run script from the project root — it handles everything:
 
-2. Make sure Streamlit is installed:
+   **macOS/Linux:** `./run.sh`  
+   **Windows:** `run.bat`
+
+2. If you want to run Streamlit manually, use `uv run` so the venv is automatically used:
    ```bash
-   uv pip install streamlit
+   uv run streamlit run ui/app.py
    ```
+   Always run from the project root, not from inside `ui/`.
 
-3. Run from the project root, not from inside the `ui/` directory:
+3. If port 8501 is already in use, specify another port:
    ```bash
-   streamlit run ui/app.py
-   ```
-
-4. If port 8501 is already in use, specify another port:
-   ```bash
-   streamlit run ui/app.py --server.port 8502
+   uv run streamlit run ui/app.py --server.port 8502
    ```
 
 ---
@@ -566,34 +541,37 @@ print(n.send("Test message from grc-engineered"))
 # True = message sent; False = credentials missing or error
 ```
 
-For Jira, make sure `slack-sdk` is installed:
+For Slack, install the optional integration and re-sync:
 ```bash
-uv pip install "slack-sdk>=3.33.0"
-# or
-uv pip install -e ".[slack]"
+uv sync --extra slack --system-certs
+```
+
+For Jira, install the optional integration and re-sync:
+```bash
+uv sync --extra jira --system-certs
 ```
 
 ---
 
 ### Tests are skipped or show `No API key found`
 
-Integration tests require a live API connection. Set credentials in your environment before running pytest:
+Integration tests require a live API connection. Set credentials in your environment before running:
 
 **Windows (PowerShell):**
 ```powershell
 $env:ANTHROPIC_API_KEY = "sk-ant-..."
-pytest tests/
+uv run pytest tests/
 ```
 
 **macOS/Linux:**
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
-pytest tests/
+uv run pytest tests/
 ```
 
-To skip live LLM tests and only run unit tests:
+To skip live LLM tests and only run unit tests (no API key needed):
 ```bash
-pytest tests/ -m "not needs_llm"
+uv run pytest tests/ -m "not needs_llm"
 ```
 
 ---
@@ -618,9 +596,9 @@ If you are on an older version:
   sudo apt install python3.11 python3.11-venv
   ```
 
-Make sure `uv` uses the right version:
+Tell `uv` to use a specific Python version when syncing:
 ```bash
-uv venv --python 3.11
+uv sync --python 3.11 --system-certs
 ```
 
 ---

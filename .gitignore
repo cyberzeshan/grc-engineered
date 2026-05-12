@@ -15,7 +15,7 @@ build/
 .eggs/
 .Python
 
-# Virtual environments
+# Virtual environments (uv creates .venv automatically via uv sync)
 venv/
 env/
 .venv/
