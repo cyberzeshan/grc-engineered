@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import re
 from datetime import date, datetime, timedelta
+
+_YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
+_MONTH_NAMES = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"}
 
 
 class EvidenceScorer:
@@ -39,10 +43,9 @@ class EvidenceScorer:
             deductions += 25
 
         # Timestamp in artifact
-        has_timestamp = any(
-            marker in artifact_text
-            for marker in ["2024", "2025", "2026", "Jan", "Feb", "Mar", "Apr",
-                           "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        has_timestamp = bool(
+            _YEAR_RE.search(artifact_text)
+            or any(m in artifact_text for m in _MONTH_NAMES)
         )
         if not has_timestamp:
             tags.append("MISSING_TIMESTAMP")

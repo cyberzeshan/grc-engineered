@@ -121,6 +121,9 @@ class AnthropicProvider(LLMProvider):
                             })
                     if results:
                         messages.append({"role": "user", "content": results})
+                    else:
+                        # stop_reason was tool_use but no tool_use blocks found — avoid a stuck loop
+                        return "".join(b.text for b in resp.content if b.type == "text")
                 elif resp.stop_reason == "max_tokens":
                     partial = "".join(b.text for b in resp.content if b.type == "text")
                     return f"[Agent Warning] Output truncated at max_tokens limit.\n{partial}"

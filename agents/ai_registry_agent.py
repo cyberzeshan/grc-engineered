@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import date
 from pathlib import Path
 
 from agents.base_agent import BaseAgent
@@ -70,7 +71,7 @@ class AIRegistryAgent(BaseAgent):
     def save_registry(self, entries: list[AIRegistryEntry], output_dir: str = "./outputs") -> str:
         path = Path(output_dir) / "ai_registry.md"
         path.parent.mkdir(parents=True, exist_ok=True)
-        sections = [f"# AI Use-Case Registry\n\nGenerated {__import__('datetime').date.today()}\n"]
+        sections = [f"# AI Use-Case Registry\n\nGenerated {date.today()}\n"]
         for e in entries:
             sections.append(e.registry_entry_markdown)
         path.write_text("\n\n---\n\n".join(sections), encoding="utf-8")

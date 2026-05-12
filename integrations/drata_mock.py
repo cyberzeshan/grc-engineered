@@ -4,7 +4,6 @@ import json
 import os
 from datetime import date, timedelta
 from pathlib import Path
-import random
 
 
 _SAMPLE_EVIDENCE = [

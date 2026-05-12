@@ -63,7 +63,7 @@ class ControlMappingAgent(BaseAgent):
                 return f"Invalid filename: '{raw_name}'. Use a plain filename with no path components."
             file_path = self.frameworks_path / safe_name
             # Confirm resolved path is still inside frameworks_path (defense-in-depth)
-            if not str(file_path.resolve()).startswith(str(self.frameworks_path.resolve())):
+            if not file_path.resolve().is_relative_to(self.frameworks_path.resolve()):
                 return "Access denied: path outside knowledge/frameworks/."
             if file_path.exists():
                 return file_path.read_text(encoding="utf-8", errors="replace")[:8000]

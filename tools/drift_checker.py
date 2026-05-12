@@ -22,7 +22,10 @@ class DriftChecker:
 
     def _load_state(self) -> dict[str, str]:
         if self.state_path.exists():
-            return json.loads(self.state_path.read_text())
+            try:
+                return json.loads(self.state_path.read_text())
+            except (json.JSONDecodeError, OSError):
+                return {}
         return {}
 
     def _save_state(self) -> None:

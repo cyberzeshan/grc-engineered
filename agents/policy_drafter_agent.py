@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import date
 from pathlib import Path
 
@@ -64,7 +65,7 @@ class PolicyDrafterAgent(BaseAgent):
     def save_outputs(self, output: PolicyDraftOutput, output_dir: str = "./outputs") -> dict[str, str]:
         base = Path(output_dir)
         base.mkdir(parents=True, exist_ok=True)
-        safe_name = output.policy_name.replace(" ", "_").lower()
+        safe_name = re.sub(r"[^a-z0-9_\-]", "_", output.policy_name.lower().replace(" ", "_"))
         md_path = base / f"{safe_name}_revised.md"
         log_path = base / f"{safe_name}_change_log.json"
         md_path.write_text(output.revised_policy_text, encoding="utf-8")

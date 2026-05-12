@@ -6,6 +6,11 @@ from datetime import date, datetime
 from agents.base_agent import BaseAgent
 from core.models import EvidenceReviewInput, EvidenceReviewOutput
 
+
+def _sanitize(value: str) -> str:
+    """Strip newlines from single-line fields to prevent prompt injection."""
+    return value.replace("\n", " ").replace("\r", " ").strip()
+
 SYSTEM_PROMPT = """You are an experienced compliance analyst reviewing evidence artifacts for a SOC 2 / ISO 27001 audit.
 
 Evaluation criteria (apply strictly):
@@ -39,11 +44,11 @@ class EvidenceReviewerAgent(BaseAgent):
         today = date.today().isoformat()
         prompt = (
             f"Review this evidence artifact. Today's date is {today}.\n\n"
-            f"Control ID: {inp.control_id}\n"
-            f"Control Description: {inp.control_description}\n"
-            f"Artifact Filename: {inp.artifact_filename}\n"
-            f"Collection Date: {inp.collection_date}\n"
-            f"System Name: {inp.system_name}\n\n"
+            f"Control ID: {_sanitize(inp.control_id)}\n"
+            f"Control Description: {_sanitize(inp.control_description)}\n"
+            f"Artifact Filename: {_sanitize(inp.artifact_filename)}\n"
+            f"Collection Date: {_sanitize(inp.collection_date)}\n"
+            f"System Name: {_sanitize(inp.system_name)}\n\n"
             f"<artifact>\n{inp.artifact_text[:4000]}\n</artifact>\n\n"
             "Return valid JSON matching the EvidenceReviewOutput schema."
         )
