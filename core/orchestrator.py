@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from agents.base_agent import DEFAULT_MODEL
 from core.providers import LLMProvider, create_provider
 
 AGENT_KEYS = [

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from agents.base_agent import BaseAgent
+from agents.base_agent import BaseAgent, _strip_fences
 from core.models import VendorIntakeInput, VendorRiskProfile
 
 SYSTEM_PROMPT = """You are a third-party risk analyst responsible for vendor intake and tiering.
@@ -44,7 +44,7 @@ class TPRMTriageAgent(BaseAgent):
         )
         raw = self.run(prompt)
         try:
-            data = json.loads(raw)
+            data = json.loads(_strip_fences(raw))
             return VendorRiskProfile(**data)
         except Exception:
             return VendorRiskProfile(

@@ -23,7 +23,7 @@ st.set_page_config(
 )
 
 # ── Sidebar ──────────────────────────────────────────────────────────────────
-st.sidebar.title("🔐 GRC Agent Platform")
+st.sidebar.title("⚙️ grc-engineered")
 
 _provider = os.getenv("LLM_PROVIDER", "anthropic").lower()
 if _provider == "ollama":

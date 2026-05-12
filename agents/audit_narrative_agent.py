@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from agents.base_agent import BaseAgent
+from agents.base_agent import BaseAgent, _strip_fences
 from core.models import AuditNarrativeInput, AuditNarrativeOutput
 
 SYSTEM_PROMPT = """You are a GRC lead preparing audit-ready documentation for SOC 2 and ISO 27001 assessments.
@@ -49,7 +49,7 @@ class AuditNarrativeAgent(BaseAgent):
         )
         raw = self.run_streaming(prompt)
         try:
-            data = json.loads(raw)
+            data = json.loads(_strip_fences(raw))
             # Compute word count if missing
             if not data.get("word_count"):
                 data["word_count"] = len(data.get("narrative_text", "").split())

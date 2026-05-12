@@ -5,7 +5,7 @@ import re
 from datetime import date
 from pathlib import Path
 
-from agents.base_agent import BaseAgent
+from agents.base_agent import BaseAgent, _strip_fences
 from core.models import PolicyDraftInput, PolicyDraftOutput
 
 SYSTEM_PROMPT = """You are a senior GRC writer responsible for maintaining the organization's policy library.
@@ -47,7 +47,7 @@ class PolicyDrafterAgent(BaseAgent):
         )
         raw = self.run_streaming(prompt)
         try:
-            data = json.loads(raw)
+            data = json.loads(_strip_fences(raw))
             return PolicyDraftOutput(**data)
         except Exception:
             return PolicyDraftOutput(

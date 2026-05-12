@@ -4,7 +4,7 @@ import json
 from datetime import date
 from pathlib import Path
 
-from agents.base_agent import BaseAgent
+from agents.base_agent import BaseAgent, _strip_fences
 from core.models import AIUseCaseInput, AIRegistryEntry
 
 SYSTEM_PROMPT = """You are an AI governance specialist maintaining the organization's AI use-case registry
@@ -52,7 +52,7 @@ class AIRegistryAgent(BaseAgent):
         )
         raw = self.run(prompt)
         try:
-            data = json.loads(raw)
+            data = json.loads(_strip_fences(raw))
             return AIRegistryEntry(**data)
         except Exception:
             return AIRegistryEntry(

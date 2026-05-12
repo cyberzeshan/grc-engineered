@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from agents.base_agent import BaseAgent
+from agents.base_agent import BaseAgent, _strip_fences
 from core.models import QuestionnaireAnswer
 from core.vector_store import VectorStore
 
@@ -40,7 +40,7 @@ class QuestionnaireResponderAgent(BaseAgent):
         )
         raw = self.run(prompt)
         try:
-            data = json.loads(raw)
+            data = json.loads(_strip_fences(raw))
             return QuestionnaireAnswer(**data)
         except Exception:
             return QuestionnaireAnswer(

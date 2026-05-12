@@ -67,3 +67,14 @@ class BaseAgent:
 
 def _format_context(context: dict) -> str:
     return "\n".join(f"{k}: {v}" for k, v in context.items())
+
+
+def _strip_fences(text: str) -> str:
+    """Remove markdown code fences that models add despite being told not to."""
+    s = text.strip()
+    if s.startswith("```"):
+        s = s.split("```", 2)[1]
+        if s.startswith("json"):
+            s = s[4:]
+        s = s.rsplit("```", 1)[0].strip()
+    return s

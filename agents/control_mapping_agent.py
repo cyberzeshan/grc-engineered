@@ -5,7 +5,7 @@ import os
 from datetime import date
 from pathlib import Path
 
-from agents.base_agent import BaseAgent
+from agents.base_agent import BaseAgent, _strip_fences
 from core.models import ControlMappingInput, ControlMappingOutput
 
 SYSTEM_PROMPT = """You are a GRC engineer specializing in control framework mapping.
@@ -82,7 +82,7 @@ class ControlMappingAgent(BaseAgent):
         )
         raw = self.run_with_tools(prompt)
         try:
-            data = json.loads(raw)
+            data = json.loads(_strip_fences(raw))
             return ControlMappingOutput(**data)
         except Exception:
             return ControlMappingOutput(

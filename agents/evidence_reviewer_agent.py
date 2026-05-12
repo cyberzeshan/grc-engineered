@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from datetime import date, datetime
 
-from agents.base_agent import BaseAgent
+from agents.base_agent import BaseAgent, _strip_fences
 from core.models import EvidenceReviewInput, EvidenceReviewOutput
 
 
@@ -54,7 +54,7 @@ class EvidenceReviewerAgent(BaseAgent):
         )
         raw = self.run(prompt)
         try:
-            data = json.loads(raw)
+            data = json.loads(_strip_fences(raw))
             return EvidenceReviewOutput(**data)
         except Exception:
             return EvidenceReviewOutput(
