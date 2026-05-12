@@ -28,7 +28,7 @@ class VectorStore:
         if not documents:
             return
         ids = ids or [str(uuid.uuid4()) for _ in documents]
-        metadatas = metadatas or [{} for _ in documents]
+        metadatas = metadatas or [{"source": "unknown"} for _ in documents]
         self.collection.add(documents=documents, ids=ids, metadatas=metadatas)
 
     def query(self, query_text: str, n_results: int = 3) -> list[str]:

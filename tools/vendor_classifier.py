@@ -29,7 +29,7 @@ class VendorClassifier:
         desc_lower = description.lower()
         country_lower = data_location.lower()
 
-        ai_flag = uses_ai or bool(AI_KEYWORDS & set(desc_lower.split()))
+        ai_flag = uses_ai or any(kw in desc_lower for kw in AI_KEYWORDS)
         has_sensitive_data = bool(HIGH_RISK_DATA & data_lower)
         high_risk_geo = any(c in country_lower for c in HIGH_RISK_COUNTRIES)
 
