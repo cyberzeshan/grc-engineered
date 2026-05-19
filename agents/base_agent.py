@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from core.providers import LLMProvider, create_provider
 
-DEFAULT_MODEL = "claude-sonnet-4-6"
-
 
 class BaseAgent:
     """Base class for all GRC agents.
@@ -16,7 +14,6 @@ class BaseAgent:
         self,
         system_prompt: str,
         tools: list[dict] | None = None,
-        model: str = DEFAULT_MODEL,
     ) -> None:
         self._system_prompt = system_prompt
         self.tools = tools or []

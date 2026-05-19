@@ -4,7 +4,7 @@ import json
 import os
 import sqlite3
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class SessionMemory:
@@ -50,7 +50,7 @@ class SessionMemory:
             conn.close()
 
     def save_session(self, session_id: str, agent_type: str, context: dict) -> None:
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         with self._conn() as conn:
             conn.execute(
                 """
@@ -77,7 +77,7 @@ class SessionMemory:
         input_summary: str,
         output_summary: str,
     ) -> None:
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         with self._conn() as conn:
             conn.execute(
                 "INSERT INTO run_log (session_id, agent_type, input_summary, output_summary, timestamp) VALUES (?,?,?,?,?)",

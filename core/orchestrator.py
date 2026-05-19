@@ -31,7 +31,7 @@ class GRCOrchestrator:
 
     def __init__(self) -> None:
         self._provider: LLMProvider = create_provider()
-        self._agent_map: dict | None = None
+        self._agent_map: dict[str, type] | None = None
 
     @property
     def agent_map(self) -> dict:

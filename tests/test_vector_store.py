@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 import pytest
+
+pytest.importorskip("chromadb", reason="chromadb not installed — skipping vector store tests")
+
 from core.vector_store import VectorStore, _chunk_text
 
 

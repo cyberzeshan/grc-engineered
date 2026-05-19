@@ -50,9 +50,7 @@ class AuditNarrativeAgent(BaseAgent):
         raw = self.run_streaming(prompt)
         try:
             data = json.loads(_strip_fences(raw))
-            # Compute word count if missing
-            if not data.get("word_count"):
-                data["word_count"] = len(data.get("narrative_text", "").split())
+            data["word_count"] = len(data.get("narrative_text", "").split())
             return AuditNarrativeOutput(**data)
         except Exception:
             narrative = raw if len(raw) > 50 else "Unable to generate narrative."

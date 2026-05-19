@@ -16,7 +16,6 @@ keywords = [
 
 dependencies = [
     "anthropic>=0.40.0",
-    "chromadb>=0.5.0",
     "pydantic>=2.9.0",
     "streamlit>=1.40.0",
     "python-dotenv>=1.0.0",
@@ -29,12 +28,22 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Vector store for Questionnaire Responder (requires 64-bit Python on Windows)
+vector = ["chromadb>=0.5.0"]
 # Optional: Slack alert integration
 slack = ["slack-sdk>=3.33.0"]
 # Optional: Jira ticket creation
 jira = ["jira>=3.8.0"]
 # All optional integrations at once
-all = ["slack-sdk>=3.33.0", "jira>=3.8.0"]
+all = ["chromadb>=0.5.0", "slack-sdk>=3.33.0", "jira>=3.8.0"]
+
+[tool.uv]
+# Resolve packages for 64-bit Windows and all other platforms.
+# chromadb/onnxruntime have no 32-bit Windows wheels; use 64-bit Python on Windows.
+required-environments = [
+    "sys_platform == 'win32' and platform_machine == 'AMD64'",
+    "sys_platform != 'win32'",
+]
 
 [dependency-groups]
 dev = [

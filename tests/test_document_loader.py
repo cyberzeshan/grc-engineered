@@ -55,6 +55,7 @@ def test_load_document_docx(tmp_path):
 
 
 def test_ingest_knowledge_directory(tmp_path):
+    pytest.importorskip("chromadb", reason="chromadb not installed")
     from core.document_loader import ingest_knowledge_directory
     from core.vector_store import VectorStore
 

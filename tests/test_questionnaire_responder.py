@@ -41,6 +41,7 @@ def test_answer_questionnaire_batch():
 @needs_llm
 def test_empty_corpus_returns_needs_human_review(tmp_path):
     """With an empty vector store, the agent should flag low-confidence answers."""
+    pytest.importorskip("chromadb", reason="chromadb not installed")
     from agents.questionnaire_responder_agent import QuestionnaireResponderAgent
     from core.vector_store import VectorStore
 

@@ -65,7 +65,7 @@ Seven specialized agents, each with a defined schema and system prompt, handle t
 |-------|-----------|
 | AI Reasoning | [Anthropic Claude](https://anthropic.com) (`claude-sonnet-4-6`) **or** [Ollama](https://ollama.com) (local, free) |
 | Package Manager | [uv](https://docs.astral.sh/uv/) — fast Python package manager |
-| Vector Store | [ChromaDB](https://trychroma.com) — local, no server needed |
+| Vector Store | [ChromaDB](https://trychroma.com) — local, no server needed (optional — required only for Questionnaire Responder) |
 | Document Ingestion | [pypdf](https://pypdf.readthedocs.io) + custom chunking pipeline |
 | Data Models | [Pydantic v2](https://docs.pydantic.dev) |
 | UI | [Streamlit](https://streamlit.io) |
@@ -135,6 +135,7 @@ grc-engineered/
 ### Prerequisites
 
 - **Python 3.11 or newer** — check with `python --version` (or `python3 --version` on Mac/Linux)
+  - **Windows users: install the 64-bit version of Python.** The Questionnaire Responder agent requires ChromaDB → onnxruntime, which has no 32-bit Windows wheel. All other agents work on any architecture.
 - **Git** — check with `git --version`
 - **One of:**
   - An [Anthropic API key](https://console.anthropic.com) (paid, recommended for production)
@@ -241,7 +242,12 @@ chmod +x run.sh
 run.bat
 ```
 
-That's it. `uv sync` reads `uv.lock`, creates the virtual environment, installs every dependency at the exact pinned versions, then starts Streamlit — all in one go. You only need to run this once after cloning (or after pulling updates from the repo).
+That's it. `uv sync` reads `uv.lock`, creates the virtual environment, installs all required dependencies, then starts Streamlit — all in one go. You only need to run this once after cloning (or after pulling updates from the repo).
+
+> **Questionnaire Responder** uses ChromaDB for RAG and is installed as an optional extra. To enable it (requires 64-bit Python on Windows):
+> ```bash
+> uv sync --extra vector --system-certs
+> ```
 
 Open `http://localhost:8501` in your browser. Select any agent from the sidebar, fill in the form, and click **Run Agent**.
 
@@ -451,7 +457,13 @@ You have hit the Anthropic API rate limit. Wait 30–60 seconds and retry. If it
 
 ### Questionnaire Responder returns generic answers with no source references
 
-The vector store is empty — no knowledge documents have been ingested. Add your CCF, policies, or questionnaire templates to the `knowledge/` directory, then run:
+**First, make sure ChromaDB is installed** (it's an optional extra):
+```bash
+uv sync --extra vector --system-certs
+```
+On Windows this requires 64-bit Python (see the onnxruntime troubleshooting entry above).
+
+The vector store may also be empty — no knowledge documents have been ingested. Add your CCF, policies, or questionnaire templates to the `knowledge/` directory, then run:
 
 ```python
 from core.vector_store import VectorStore
@@ -573,6 +585,28 @@ To skip live LLM tests and only run unit tests (no API key needed):
 ```bash
 uv run pytest tests/ -m "not needs_llm"
 ```
+
+---
+
+### `onnxruntime` install error on Windows (`Distribution can't be installed`)
+
+`uv sync` fails with something like:
+
+```
+error: Distribution `onnxruntime==X.X.X` can't be installed because it doesn't
+have a source distribution or wheel for the current platform
+```
+
+**Cause:** You are running 32-bit Python on Windows. `onnxruntime` (a dependency of ChromaDB) only ships 64-bit wheels for Windows.
+
+**Fix:** Install the [64-bit Python](https://python.org/downloads) for Windows. During installation, make sure the installer says `(64-bit)`. Then delete the stale virtual environment and re-sync:
+
+```powershell
+Remove-Item -Recurse -Force .venv
+uv sync --system-certs
+```
+
+If you cannot switch to 64-bit Python, all agents except the Questionnaire Responder will still work — ChromaDB is an optional dependency and the rest of the app degrades gracefully without it.
 
 ---
 

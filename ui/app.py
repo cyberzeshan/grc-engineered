@@ -184,6 +184,12 @@ elif agent_choice == "📋 Evidence Reviewer":
 elif agent_choice == "❓ Questionnaire Responder":
     st.title("Questionnaire Responder Agent")
     st.caption("Answers security questionnaire questions from your CCF/policy corpus.")
+    from core.vector_store import CHROMADB_AVAILABLE
+    if not CHROMADB_AVAILABLE:
+        st.warning(
+            "chromadb is not installed — answers won't use your knowledge base (RAG disabled). "
+            "Install it with: `uv sync --extra vector --system-certs` (requires 64-bit Python on Windows)."
+        )
 
     questions_input = st.text_area(
         "Enter questions (one per line)",

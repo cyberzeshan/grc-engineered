@@ -28,11 +28,20 @@ Respond with valid JSON only (no markdown fences):
 class QuestionnaireResponderAgent(BaseAgent):
     def __init__(self, vector_store: VectorStore | None = None) -> None:
         super().__init__(system_prompt=SYSTEM_PROMPT)
-        self.vector_store = vector_store or VectorStore()
+        if vector_store is not None:
+            self.vector_store: VectorStore | None = vector_store
+        else:
+            try:
+                self.vector_store = VectorStore()
+            except RuntimeError:
+                self.vector_store = None  # chromadb not installed
 
     def answer_question(self, question: str) -> QuestionnaireAnswer:
-        chunks = self.vector_store.query(question, n_results=3)
-        context = "\n\n---\n\n".join(chunks) if chunks else "No relevant context found."
+        if self.vector_store is None:
+            context = "No knowledge base available — chromadb is not installed."
+        else:
+            chunks = self.vector_store.query(question, n_results=3)
+            context = "\n\n---\n\n".join(chunks) if chunks else "No relevant context found."
         prompt = (
             f"Question: {question}\n\n"
             f"Relevant CCF/Policy context:\n{context}\n\n"

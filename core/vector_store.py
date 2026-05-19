@@ -4,14 +4,26 @@ import os
 import uuid
 from pathlib import Path
 
-import chromadb
-from chromadb.config import Settings
+try:
+    import chromadb
+    CHROMADB_AVAILABLE = True
+except ImportError:
+    chromadb = None  # type: ignore
+    CHROMADB_AVAILABLE = False
 
 
 class VectorStore:
-    """ChromaDB-backed vector store for GRC knowledge retrieval."""
+    """ChromaDB-backed vector store for GRC knowledge retrieval.
+
+    Requires chromadb (64-bit Python on Windows): pip install chromadb
+    """
 
     def __init__(self, persist_dir: str | None = None) -> None:
+        if not CHROMADB_AVAILABLE:
+            raise RuntimeError(
+                "chromadb is not installed. Install it with: pip install chromadb\n"
+                "On Windows, 64-bit Python is required."
+            )
         path = persist_dir or os.getenv("CHROMA_DB_PATH", "./chroma_db")
         self.client = chromadb.PersistentClient(path=path)
         self.collection = self.client.get_or_create_collection(
@@ -32,24 +44,24 @@ class VectorStore:
         self.collection.add(documents=documents, ids=ids, metadatas=metadatas)
 
     def query(self, query_text: str, n_results: int = 3) -> list[str]:
-        count = self.collection.count()
-        if count == 0:
+        total = self.collection.count()
+        if total == 0:
             return []
         results = self.collection.query(
             query_texts=[query_text],
-            n_results=min(n_results, count),
+            n_results=min(n_results, total),
         )
         return results["documents"][0] if results["documents"] else []
 
     def query_with_metadata(
         self, query_text: str, n_results: int = 3
     ) -> list[dict]:
-        count = self.collection.count()
-        if count == 0:
+        total = self.collection.count()
+        if total == 0:
             return []
         results = self.collection.query(
             query_texts=[query_text],
-            n_results=min(n_results, count),
+            n_results=min(n_results, total),
             include=["documents", "metadatas", "distances"],
         )
         out = []
